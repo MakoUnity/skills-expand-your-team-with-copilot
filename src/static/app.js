@@ -280,10 +280,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Format schedule for display - handles both old and new format
   function formatSchedule(details) {
-    if (details.schedule && !details.schedule.includes(" - ")) {
-      return details.schedule;
-    }
-
     // If schedule_details is available, use the structured data
     if (details.schedule_details) {
       const days = details.schedule_details.days.join(", ");
@@ -325,12 +321,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return "sports";
     } else if (
       name.includes("art") ||
-      name.includes("manga") ||
       name.includes("music") ||
       name.includes("theater") ||
       name.includes("drama") ||
       desc.includes("creative") ||
-      desc.includes("manga") ||
       desc.includes("paint")
     ) {
       return "arts";
