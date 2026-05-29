@@ -575,6 +575,22 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="share-container">
+        <button class="share-button" aria-label="Share this activity">
+          <span class="share-icon">🔗</span> Share
+        </button>
+        <div class="share-popover hidden">
+          <a class="share-option share-twitter" href="#" target="_blank" rel="noopener noreferrer" aria-label="Share on X (Twitter)">
+            𝕏 X (Twitter)
+          </a>
+          <a class="share-option share-facebook" href="#" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook">
+            📘 Facebook
+          </a>
+          <button class="share-option share-copy" aria-label="Copy link">
+            📋 Copy Link
+          </button>
+        </div>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -593,8 +609,83 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Set up share button
+    setupShareButton(activityCard, name, details.description, formattedSchedule);
+
     activitiesList.appendChild(activityCard);
   }
+
+  // Set up share button functionality for an activity card
+  function setupShareButton(card, activityName, description, schedule) {
+    const shareBtn = card.querySelector(".share-button");
+    const popover = card.querySelector(".share-popover");
+    const twitterLink = card.querySelector(".share-twitter");
+    const facebookLink = card.querySelector(".share-facebook");
+    const copyBtn = card.querySelector(".share-copy");
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}`;
+    const truncatedDesc = description.length > 100 ? description.slice(0, 97) + "..." : description;
+    const shareText = `Check out "${activityName}" at Mergington High School! ${truncatedDesc} Schedule: ${schedule}`;
+
+    // Use Web Share API on supported devices (typically mobile)
+    shareBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (navigator.share) {
+        navigator.share({
+          title: activityName,
+          text: shareText,
+          url: shareUrl,
+        }).catch(() => {});
+        return;
+      }
+      // Toggle popover for desktop
+      const isHidden = popover.classList.contains("hidden");
+      // Close all other open popovers first
+      document.querySelectorAll(".share-popover:not(.hidden)").forEach((p) => {
+        if (p !== popover) p.classList.add("hidden");
+      });
+      popover.classList.toggle("hidden", !isHidden);
+    });
+
+    // Set up Twitter share
+    twitterLink.href =
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+
+    // Set up Facebook share
+    facebookLink.href =
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+
+    // Copy link to clipboard
+    copyBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        copyBtn.textContent = "✅ Copied!";
+        setTimeout(() => {
+          copyBtn.textContent = "📋 Copy Link";
+          popover.classList.add("hidden");
+        }, 1500);
+      }).catch(() => {
+        // Fallback for browsers without clipboard API
+        const tempInput = document.createElement("input");
+        tempInput.value = shareUrl;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        copyBtn.textContent = "✅ Copied!";
+        setTimeout(() => {
+          copyBtn.textContent = "📋 Copy Link";
+          popover.classList.add("hidden");
+        }, 1500);
+      });
+    });
+  }
+
+  // Close share popovers when clicking outside
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".share-popover:not(.hidden)").forEach((p) => {
+      p.classList.add("hidden");
+    });
+  });
 
   // Event listeners for search and filter
   searchInput.addEventListener("input", (event) => {
